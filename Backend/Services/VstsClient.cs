@@ -26,8 +26,9 @@ namespace VSTSBuildDashboard.Services
 
             public Task<BuildDetailsApiModel> BuildDetails(int buildNumber)
             {
-                return _client.DeserializeJsonGetRequest<BuildDetailsApiModel>(new Uri(_buildApiUri,
-                    $"{buildNumber}?api-version=4.1"));
+            var uri = new Uri(_buildApiUri,
+                $"{buildNumber}?api-version=4.1");
+                return _client.DeserializeJsonGetRequest<BuildDetailsApiModel>(uri);
             }
 
             public async Task<ListReleasesApiModel.ReleaseListItem> GetReleaseItem(Guid projectId, int buildDefintionId,
@@ -55,5 +56,17 @@ namespace VSTSBuildDashboard.Services
             {
                 return (await _client.DeserializeJsonGetRequest<BuildListModel>(new Uri(_buildApiUri, "builds?statusFilter=inProgress&api-version=4.1"))).Value;
             }
+
+        public async Task<TimeSpan> GetBuildAverageDuration(int definitionId)
+        {
+            var uri = new Uri(_buildApiUri, $"?definitions={definitionId}&resultFilter=succeeded&api-version=4.1");
+            var builds = (await _client.DeserializeJsonGetRequest<BuildListModel>(uri)).Value;
+
+            var averageTicks = builds.Select(x => x.FinishTime - x.StartTime).Average(x => x.Ticks);
+            long longAverageTicks = Convert.ToInt64(averageTicks);
+
+
+            return new TimeSpan(longAverageTicks);
         }
+    }
 }

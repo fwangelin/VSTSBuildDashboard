@@ -30,23 +30,36 @@ namespace VSTSBuildDashboard.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<string>> GetLatestBuild()
+        public async Task<ActionResult<string>> GetBuildDetails([FromQuery] int? buildId)
         {
 
-            var build = await vstsClient.BuildDetails(367);
+            if (buildId == null)
+            {
+                return BadRequest($"Query Parameter {nameof(buildId)} cannot be null");
+            }
+      
+            var build = await vstsClient.BuildDetails(buildId.Value);
 
-            return Ok(build);
+            return Ok(new { name = build.Definition.Name, id = build.Id, result = build.Result, isFinished = build.FinishTime.HasValue, });
 
         }
 
-        [HttpGet]
-        public async Task<ActionResult<string>> GetRunningBuilds()
+        [HttpGet, Route("average")]
+        public async Task<ActionResult<string>> GetAverageDuration([FromQuery] int? definitionId)
         {
-
-            var build = await vstsClient.GetRunningBuilds();
-
-            return Ok(build);
-
+           
+            return Ok(new { duration = await vstsClient.GetBuildAverageDuration(definitionId.Value)});
         }
+
+        //TODO: Add information for progress bar. 
+        //[HttpGet]
+        //public async Task<ActionResult<string>> GetRunningBuilds()
+        //{
+
+        //    var build = await vstsClient.GetRunningBuilds();
+
+        //    return Ok(build);
+
+        //}
     }
 }
