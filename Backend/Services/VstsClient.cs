@@ -54,7 +54,8 @@ namespace VSTSBuildDashboard.Services
 
             public async Task<BuildListModel.VstsValue[]>  GetRunningBuilds()
             {
-                return (await _client.DeserializeJsonGetRequest<BuildListModel>(new Uri(_buildApiUri, "builds?statusFilter=inProgress&api-version=4.1"))).Value;
+                // removed builds before statusfilter
+                return (await _client.DeserializeJsonGetRequest<BuildListModel>(new Uri(_buildApiUri, "?statusFilter=inProgress&api-version=4.1"))).Value;
             }
 
         public async Task<TimeSpan> GetBuildAverageDuration(int definitionId)

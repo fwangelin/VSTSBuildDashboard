@@ -33,6 +33,8 @@ namespace VSTSBuildDashboard.Controllers
         public async Task<ActionResult<string>> GetBuildDetails([FromQuery] int? buildId)
         {
 
+            // TODO: Create a build where we get Xamarin build from correct build branch. 
+
             if (buildId == null)
             {
                 return BadRequest($"Query Parameter {nameof(buildId)} cannot be null");
@@ -40,8 +42,20 @@ namespace VSTSBuildDashboard.Controllers
       
             var build = await vstsClient.BuildDetails(buildId.Value);
 
-            return Ok(new { name = build.Definition.Name, id = build.Id, result = build.Result, isFinished = build.FinishTime.HasValue, });
-
+            return Ok(new { name = build.Definition.Name,
+                id = build.Id,
+                buildNumber = build.BuildNumber,
+                queTime = build.QueueTime,
+                startTime = build.StartTime,
+                finishTime = build.FinishTime != null ? build.FinishTime : null,
+                buildTime = build.FinishTime - build.StartTime,
+                isFinished = build.FinishTime.HasValue,
+                result = build.Result,
+                developer = build.RequestedFor.DisplayName,
+                developerImage = build.RequestedFor.ImageUrl
+          
+               });
+                            
         }
 
         [HttpGet, Route("average")]
@@ -52,14 +66,14 @@ namespace VSTSBuildDashboard.Controllers
         }
 
         //TODO: Add information for progress bar. 
-        //[HttpGet]
-        //public async Task<ActionResult<string>> GetRunningBuilds()
-        //{
+        [HttpGet, Route("runningbuild")]
+        public async Task<ActionResult<string>> GetRunningBuilds()
+        {
 
-        //    var build = await vstsClient.GetRunningBuilds();
+            var runningBuild = await vstsClient.GetRunningBuilds();
 
-        //    return Ok(build);
+            return Ok(runningBuild);
 
-        //}
+        }
     }
 }

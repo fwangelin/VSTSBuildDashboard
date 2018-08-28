@@ -1,15 +1,29 @@
 <template>
   <div id="app">
-    <img src="./assets/logo.png">
+   
     <router-view/>
   </div>
 </template>
 
-<script>
+ <script>
+// export default {
+//   name: 'App'
+// }
+// </script>
 export default {
-  name: 'App'
+  methods: {
+    test () {
+      this.$Progress.start()
+      this.$http.jsonp('https://localhost:44328/api/build?buildId=300')
+      .then((response) => {
+          this.$Progress.finish()
+      }, (response) => {
+          this.$Progress.fail()
+      })
+    }
+  }
 }
-</script>
+</script> 
 
 <style>
 #app {
@@ -18,6 +32,16 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
 }
+body { 
+  background: url(./images/build.jpg) no-repeat center center fixed; 
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  
+
+}
+
+
 </style>
