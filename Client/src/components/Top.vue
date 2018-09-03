@@ -5,6 +5,9 @@
             <tr>
                 <td>Build number:</td> <td>{{buildNumber}}</td>
             </tr>
+             <tr>
+                <td>Build Identity:</td> <td>{{id}}</td>
+            </tr>
             <tr>
                 <td>Build name:</td> <td>{{buildName}}</td>
             </tr>
@@ -30,7 +33,7 @@
 <script>
 
 export default {
-props: ['buildNumber', 'buildName', 'queTime', 'startTime', 'finishTime'],
+props: ['id', 'buildNumber', 'buildName', 'queTime', 'startTime', 'finishTime'],
 
 }
 

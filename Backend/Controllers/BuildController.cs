@@ -60,10 +60,10 @@ namespace VSTSBuildDashboard.Controllers
         }
 
         [HttpGet, Route("average")]
-        public async Task<ActionResult<string>> GetAverageDuration([FromQuery] int? definitionId)
+        public async Task<ActionResult<string>> GetAverageDuration()
         {
            
-            return Ok(new { duration = await vstsClient.GetBuildAverageDuration(definitionId.Value)});
+            return Ok(new { duration = await vstsClient.GetBuildAverageDuration()});
         }
 
         //TODO: Add information for progress bar. 
@@ -71,7 +71,9 @@ namespace VSTSBuildDashboard.Controllers
         public async Task<ActionResult<string>> GetRunningBuilds()
         {
 
-            var runningBuild = await vstsClient.GetRunningBuilds();
+            var test = await System.IO.File.ReadAllTextAsync("testbuild.json");
+
+            var runningBuild = await vstsClient.GetRunningBuilds(test);
 
             return Ok(runningBuild);
 

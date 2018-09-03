@@ -1,9 +1,11 @@
 <template>
   <div class="Hello" v-if="buildObject">
+    {{ progress }}
     <top 
+        :id="buildObject.id"
         :buildNumber="buildObject.buildNumber"
-        :buildName="buildObject.buildName"
-        :queTime="buildObject.queTime"
+        :buildName="buildObject.definition.name"
+        :queTime="buildObject.queueTime"
         :startTime="buildObject.startTime"
         :finishTime="buildObject.finishTime">
       
@@ -39,21 +41,21 @@ export default {
       msg: 'VSTSBuildDash',
       foo: null,
       buildObject: {
-        id: 507,
-        buildNumber: 'I see a little siluetto of a man',
-        buildName: 'Scaramouch, scaramouch will you do the fandango',
-        queTime: 'Thunderbolt and lightning very very frightening me',
-        startTime: 'Gallileo, Gallileo',
-        finishTime: 'Gallileo, Gallileo',
-        averageBuildTime: '',
-        buildDuration: '',
-        status: "",
-        result: "",
-        developer: "",
+        // id: '',
+        // buildNumber: '',
+        // buildName: '',
+        // queTime: '',
+        // startTime: '',
+        // finishTime: '',
+        // averageBuildTime: '',
+        // buildDuration: '',
+        // status: "",
+        // result: "",
+        // developer: "",
         
       },
       baseUrl: "https://localhost:44328/api/build",
-      progress:  48
+      averageBuildTimes: {}
        // set hardcoded value: 30 for 30%
     }
   },
@@ -62,9 +64,20 @@ export default {
   computed: {
      updateProgress(){
     setTimeout(function(){
-         this.progress += 10
+       return  this.progress += 10
     }, 1000)
-  }
+  },
+    progress(){
+      let now = new Date();
+      let startDate = new Date(this.buildObject.startTime);
+      var timeDiff = Math.abs(now.getTime() - startDate.getTime());
+      var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24)); 
+      return timeDiff;
+
+      //return (timeDiff / averageBuildTime) * 100
+      // Make calculation correct, then use as progressbar. 
+    }
+
 
   },
   beforeCreate() {
@@ -72,22 +85,31 @@ export default {
   },
   mounted(){
     
-   this.loadAverageBuildTime()
-   this.checkRunningBuildStatus()
-   this.loadBuildDetails()
+      this.init()
 
   },
   methods: {
+    async init(){
+        await this.loadAverageBuildTime()
+        await this.checkRunningBuildStatus()
+       // await this.loadBuildDetails()
+    },
     
     async loadAverageBuildTime () {
 
       try{
        // const result = (await this.axios.get("https://localhost:44328/api/build/average?definitionId=2")).data;
        console.log(this.baseUrl);
-       
-       const result = (await this.axios.get(`${this.baseUrl}/average?definitionId=2`)).data;
-        
-          var shorten = result.duration;
+      //  var durations = {};
+      //  var build = {};
+       // by getting array of different durations
+       // we need to compare definition.id to runningbuild Id
+       // this way we set the average build time by the build we are gathering. 
+      // var duration = durations[build.definition.id]; 
+
+       this.averageBuildTimes = (await this.axios.get(`${this.baseUrl}/average`)).data.duration;
+      
+          var shorten = result.id;
               shorten = shorten.slice(0, -8)
 
           this.buildObject.averageBuildTime = shorten;
@@ -99,10 +121,18 @@ export default {
     async checkRunningBuildStatus(){
      
       try{
-        const result = (await this.axios.get("https://localhost:44328/api/build/runningbuild")).data; 
-        //.then(x => JSON.parse(x.request.response)).then(x => {this.foo = x }).catch(x => console.log(x)); 
+          this.buildObject = (await this.axios.get("https://localhost:44328/api/build/runningbuild")).data[0]; 
 
-         this.buildObject.id = result.id;
+
+        //.then(x => JSON.parse(x.request.response)).then(x => {this.foo = x }).catch(x => console.log(x)); 
+        // console.log(result[0].definition.id);
+        // console.log(this.averageBuildTimes.duration);
+        
+        const averageBuildTime = this.averageBuildTimes[this.buildObject.definition.id];
+        this.$set(this.buildObject, 'averageBuildTime', averageBuildTime)
+        
+         this.buildObject.id = result[0].id;
+         var compareDefinitionId = result.definition.id;
 
       
       }
@@ -114,6 +144,7 @@ export default {
     pollMenuItems() {
       this.getMenuItems().then(() => {
         setTimeout(this.pollMenuItems, 60000);
+        // setInterval
       });
     },
 

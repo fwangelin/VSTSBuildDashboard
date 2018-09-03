@@ -49,7 +49,7 @@ namespace VSTSBuildDashboard.APIModels
         public class Definition
         {
             [JsonProperty("drafts")] public object[] Drafts { get; set; }
-            [JsonProperty("id")] public long Id { get; set; }
+            [JsonProperty("id")] public int Id { get; set; }
             [JsonProperty("name")] public string Name { get; set; }
             [JsonProperty("url")] public string Url { get; set; }
             [JsonProperty("uri")] public string Uri { get; set; }

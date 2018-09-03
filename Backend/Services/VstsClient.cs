@@ -8,6 +8,8 @@ using VSTSBuildDashboard.VstsModels;
 using VSTSBuildDashboard.Extensions;
 using VSTSBuildDashboard.VstsModels;
 using VSTSBuildDashboard.APIModels;
+using System.Collections.Generic;
+using Newtonsoft.Json;
 
 namespace VSTSBuildDashboard.Services
 {
@@ -52,22 +54,24 @@ namespace VSTSBuildDashboard.Services
             public Task<GitCommitChangesModel> GetCommitChanges(GitCommitDetailsModel model) =>
                 _client.DeserializeJsonGetRequest<GitCommitChangesModel>(new Uri(model.Links.Changes.Href));
 
-            public async Task<BuildListModel.VstsValue[]>  GetRunningBuilds()
+            public async Task<BuildListModel.VstsValue[]>  GetRunningBuilds(string testJson = null)
             {
-                // removed builds before statusfilter
+            // removed builds before statusfilter
+            if (testJson != null)
+            {
+                return JsonConvert.DeserializeObject<BuildListModel>(testJson).Value;
+            }
                 return (await _client.DeserializeJsonGetRequest<BuildListModel>(new Uri(_buildApiUri, "?statusFilter=inProgress&api-version=4.1"))).Value;
             }
 
-        public async Task<TimeSpan> GetBuildAverageDuration(int definitionId)
+        public async Task<Dictionary<int, TimeSpan>> GetBuildAverageDuration()
         {
-            var uri = new Uri(_buildApiUri, $"?definitions={definitionId}&resultFilter=succeeded&api-version=4.1");
-            var builds = (await _client.DeserializeJsonGetRequest<BuildListModel>(uri)).Value;
+     
+            var uri = new Uri(_buildApiUri, $"?resultFilter=succeeded&api-version=4.1");
+           return (await _client.DeserializeJsonGetRequest<BuildListModel>(uri)).Value
+                .GroupBy(x => x.Definition.Id)
+                .ToDictionary(x => x.Key , x => new TimeSpan(Convert.ToInt64(x.Select(y => y.FinishTime - y.StartTime).Average(y => y.Ticks))));
 
-            var averageTicks = builds.Select(x => x.FinishTime - x.StartTime).Average(x => x.Ticks);
-            long longAverageTicks = Convert.ToInt64(averageTicks);
-
-
-            return new TimeSpan(longAverageTicks);
         }
     }
 }
