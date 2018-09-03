@@ -39,17 +39,20 @@ export default {
       msg: 'VSTSBuildDash',
       foo: null,
       buildObject: {
-        buildNumber: '20180712.6',
-        buildName: 'VSTSBuildDashboard',
-        queTime: '2018-08-30 11:02:26',
-        startTime: '2018-08-30 11:02:28',
-        finishTime: 'pending..',
+        id: 507,
+        buildNumber: 'I see a little siluetto of a man',
+        buildName: 'Scaramouch, scaramouch will you do the fandango',
+        queTime: 'Thunderbolt and lightning very very frightening me',
+        startTime: 'Gallileo, Gallileo',
+        finishTime: 'Gallileo, Gallileo',
         averageBuildTime: '',
-        buildDuration: 'stuff',
-        status: "Pending",
-        result: "Pending",
-        developer: "Fredrik Wängelin"
+        buildDuration: '',
+        status: "",
+        result: "",
+        developer: "",
+        
       },
+      baseUrl: "https://localhost:44328/api/build",
       progress:  48
        // set hardcoded value: 30 for 30%
     }
@@ -70,16 +73,24 @@ export default {
   mounted(){
     
    this.loadAverageBuildTime()
-   //this.checkRunningBuildStatus()
+   this.checkRunningBuildStatus()
    this.loadBuildDetails()
 
   },
   methods: {
+    
     async loadAverageBuildTime () {
 
       try{
-        const result = (await this.axios.get("https://localhost:44328/api/build/average?definitionId=2")).data;
-        this.buildObject.averageBuildTime = result.duration;    
+       // const result = (await this.axios.get("https://localhost:44328/api/build/average?definitionId=2")).data;
+       console.log(this.baseUrl);
+       
+       const result = (await this.axios.get(`${this.baseUrl}/average?definitionId=2`)).data;
+        
+          var shorten = result.duration;
+              shorten = shorten.slice(0, -8)
+
+          this.buildObject.averageBuildTime = shorten;
         }
       catch(e){
         console.log(e)
@@ -88,9 +99,12 @@ export default {
     async checkRunningBuildStatus(){
      
       try{
-        this.buildObject = await this.axios.get("https://localhost:44328/api/build/runningbuild").data; 
+        const result = (await this.axios.get("https://localhost:44328/api/build/runningbuild")).data; 
         //.then(x => JSON.parse(x.request.response)).then(x => {this.foo = x }).catch(x => console.log(x)); 
-       
+
+         this.buildObject.id = result.id;
+
+      
       }
       catch(e){
        console.log(e)
@@ -105,16 +119,41 @@ export default {
 
     async loadBuildDetails () {
 
+        if(!this.buildObject.id){
+          return;
+        }
       try{
-        const result = (await this.axios.get("https://localhost:44328/api/build?buildId=300")).data;
+        let result = (await this.axios.get(`${this.baseUrl}?buildId=${this.buildObject.id}`)).data;
+
         this.buildObject.buildName = result.name;
         this.buildObject.buildNumber = result.buildNumber;
         this.buildObject.queTime = result.queTime;
         this.buildObject.startTime = result.startTime;
-        this.buildObject.finishTime = result.finishTime;
-        this.buildObject.buildDuration = result.buildTime;
-        this.buildObject.status = result.isFinished;
-        this.buildObject.result = result.result;
+
+        if(!result.finishTime){
+          this.buildObject.finishTime = "Pending.."
+        }
+        else{
+          this.buildObject.finishTime = result.finishTime; 
+        }
+        if(!result.buildTime == null){
+          this.buildObject.buildDuration = "Pending.."
+        }
+        else{
+          this.buildObject.buildDuration = result.buildTime;
+        }
+        if(!result.status == null){
+          this.buildObject.status = "Pending.."
+        }
+        else{
+          this.buildObject.status = result.status;
+        }
+        if(!result.result == null){
+          this.buildObject.result = "Pending.."
+        }
+        else{
+          this.buildObject.result = result.result;
+        }
         this.buildObject.developer = result.developer;    
         }
       catch(e){

@@ -50,6 +50,7 @@ namespace VSTSBuildDashboard.Controllers
                 finishTime = build.FinishTime != null ? build.FinishTime : null,
                 buildTime = build.FinishTime - build.StartTime,
                 isFinished = build.FinishTime.HasValue,
+                status = build.Status,
                 result = build.Result,
                 developer = build.RequestedFor.DisplayName,
                 developerImage = build.RequestedFor.ImageUrl
