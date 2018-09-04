@@ -1,10 +1,9 @@
 <template>
   <div class="Hello" v-if="buildObject">
-    {{ progress }}
-    <top 
+    <top  v-show = finishedLoading
         :id="buildObject.id"
         :buildNumber="buildObject.buildNumber"
-        :buildName="buildObject.definition.name"
+        :buildName="buildName"
         :queTime="buildObject.queueTime"
         :startTime="buildObject.startTime"
         :finishTime="buildObject.finishTime">
@@ -20,6 +19,7 @@
       :result="buildObject.result"
       :developer="buildObject.developer">
     </bottom>
+    <button @click="startTimer"> start </button>
     
   </div>
 
@@ -30,6 +30,7 @@
 import bottom from '../components/Bottom.vue'
 import top from '../components/Top.vue'
 import progress from '../components/Progress.vue'
+import { setInterval, clearInterval } from 'timers';
 
 export default {
   name: 'HelloWorld',
@@ -40,10 +41,12 @@ export default {
       build: {},
       msg: 'VSTSBuildDash',
       foo: null,
+      buildRunning: false,
+      buildName: '',
       buildObject: {
         // id: '',
         // buildNumber: '',
-        // buildName: '',
+        
         // queTime: '',
         // startTime: '',
         // finishTime: '',
@@ -55,7 +58,10 @@ export default {
         
       },
       baseUrl: "https://localhost:44328/api/build",
-      averageBuildTimes: {}
+      averageBuildTimes: {},
+      progress: 0,
+      finishedLoading: false,
+ 
        // set hardcoded value: 30 for 30%
     }
   },
@@ -67,12 +73,21 @@ export default {
        return  this.progress += 10
     }, 1000)
   },
-    progress(){
-      let now = new Date();
-      let startDate = new Date(this.buildObject.startTime);
+    progressTime(){
+
+      let now = moment(new Date());
+      let startDate = moment(new Date(this.buildObject.startTime));
       var timeDiff = Math.abs(now.getTime() - startDate.getTime());
-      var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24)); 
-      return timeDiff;
+      // var timeDiff = moment.duration(now.diff(startDate));
+      var progressTime = (timeDiff / this.averageBuildTimes.duration) * 100;
+
+      console.log(timeDiff);
+      console.log(progressTime);
+
+      return progressTime;   
+     
+     // var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24)); 
+      // return timeDiff;
 
       //return (timeDiff / averageBuildTime) * 100
       // Make calculation correct, then use as progressbar. 
@@ -82,6 +97,9 @@ export default {
   },
   beforeCreate() {
     
+  },
+  created(){
+      
   },
   mounted(){
     
@@ -93,6 +111,40 @@ export default {
         await this.loadAverageBuildTime()
         await this.checkRunningBuildStatus()
        // await this.loadBuildDetails()
+    },
+    startTimer() {
+      if (this.buildRunning) {
+        return;
+      }
+
+      console.log(this.buildObject);
+      this.buildRunning = true;
+      var currTime = 0;
+      var incrementBy = 10000;
+      var averageHours = parseInt(this.buildObject.averageBuildTime.substring(0,1), 10) * 3600;
+      var averageMinutes = parseInt(this.buildObject.averageBuildTime.substring(3,4), 10) * 60;
+      var averageSeconds = parseInt(this.buildObject.averageBuildTime.substring(6,7), 10);
+
+      var buildDuration = averageHours + averageMinutes + averageSeconds;
+
+      console.log(this.buildObject.averageBuildTime);
+
+      var counter = setInterval(() => {
+        if (this.progress === 100) {
+          this.buildRunning = false;
+          clearInterval(counter);
+        } else {
+
+          console.log("TIME: ", currTime);
+          console.log("AVERAGE TIME: ", buildDuration);
+          this.progress = currTime/buildDuration; 
+          currTime += (incrementBy / 100);
+        }
+      }, 
+      incrementBy);
+
+      
+
     },
     
     async loadAverageBuildTime () {
@@ -108,36 +160,28 @@ export default {
       // var duration = durations[build.definition.id]; 
 
        this.averageBuildTimes = (await this.axios.get(`${this.baseUrl}/average`)).data.duration;
+       
       
-          var shorten = result.id;
-              shorten = shorten.slice(0, -8)
-
-          this.buildObject.averageBuildTime = shorten;
+      
         }
       catch(e){
-        console.log(e)
+        console.error(e)
         }
     },
     async checkRunningBuildStatus(){
      
       try{
           this.buildObject = (await this.axios.get("https://localhost:44328/api/build/runningbuild")).data[0]; 
-
-
-        //.then(x => JSON.parse(x.request.response)).then(x => {this.foo = x }).catch(x => console.log(x)); 
-        // console.log(result[0].definition.id);
-        // console.log(this.averageBuildTimes.duration);
+          this.finishedLoading = true;
         
+        this.buildName = this.buildObject.definition.name;
+
         const averageBuildTime = this.averageBuildTimes[this.buildObject.definition.id];
         this.$set(this.buildObject, 'averageBuildTime', averageBuildTime)
-        
-         this.buildObject.id = result[0].id;
-         var compareDefinitionId = result.definition.id;
 
-      
       }
       catch(e){
-       console.log(e)
+       console.error(e)
       }
     },
 

@@ -20,6 +20,7 @@ props: ['progress']
 <style>
 .fix-trix{
     z-index: 2;
+    position: absolute;
 }
 .progress-bar{
     display: flex;
