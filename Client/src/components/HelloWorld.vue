@@ -1,26 +1,26 @@
 <template>
   <div class="Hello" v-if="buildObject">
     <top  v-show = finishedLoading
-        :id="buildObject.id"
-        :buildNumber="buildObject.buildNumber"
+        :id="buildDetailedObject.id"
+        :buildNumber="buildDetailedObject.buildNumber"
         :buildName="buildName"
-        :queTime="buildObject.queueTime"
-        :startTime="buildObject.startTime"
-        :finishTime="buildObject.finishTime">
+
+        :startTime="buildDetailedObject.startTime"
+        :finishTime="buildDetailedObject.finishTime">
       
     </top>
     <custom-progress-bar :progress="progress"></custom-progress-bar>
     <!-- <h1>{{ foo}}</h1> -->
     
     <bottom
-      :averageBuildTime="buildObject.averageBuildTime"
-      :buildDuration="buildObject.buildDuration"
-      :status="buildObject.status"
-      :result="buildObject.result"
-      :developer="buildObject.developer">
+      :averageBuildTime="buildDetailedObject.averageBuildTime"
+      :buildDuration="buildDetailedObject.buildDuration"
+      :status="buildDetailedObject.status"
+      :result="buildDetailedObject.result"
+      :developer="buildDetailedObject.developer">
     </bottom>
-    <button @click="startTimer"> start </button>
-    
+  <!--  <button @click="startTimer"> start </button> -->
+   
   </div>
 
   
@@ -39,30 +39,30 @@ export default {
   data () {
     return {
       build: {},
+      buildObject: {},
       msg: 'VSTSBuildDash',
       foo: null,
       buildRunning: false,
       buildName: '',
-      buildObject: {
-        // id: '',
-        // buildNumber: '',
+      buildDetailedObject: {
+        id: '4',
+        buildNumber: '20180927.1',
         
-        // queTime: '',
-        // startTime: '',
-        // finishTime: '',
-        // averageBuildTime: '',
-        // buildDuration: '',
-        // status: "",
-        // result: "",
-        // developer: "",
+        queTime: '',
+        startTime: '2018-09-27 @ 09:45:34',
+        finishTime: 'Pending..',
+        averageBuildTime: '00:15:46',
+        buildDuration: '00:05:14',
+        status: "In Progress",
+        result: "Pending..",
+        developer: "",
         
       },
       baseUrl: "https://localhost:44328/api/build",
       averageBuildTimes: {},
-      progress: 0,
+      progress: 32,
       finishedLoading: false,
  
-       // set hardcoded value: 30 for 30%
     }
   },
   // Setting 10% for each second 
@@ -96,6 +96,7 @@ export default {
 
   },
   beforeCreate() {
+
     
   },
   created(){
@@ -110,7 +111,8 @@ export default {
     async init(){
         await this.loadAverageBuildTime()
         await this.checkRunningBuildStatus()
-       // await this.loadBuildDetails()
+        await this.loadBuildDetails()
+        await this.getAverageBuildTime()
     },
     startTimer() {
       if (this.buildRunning) {
@@ -168,6 +170,8 @@ export default {
         console.error(e)
         }
     },
+    // poll runningbuild and get ID then send ID from runningbuild to loadbuildDetails. 
+    // Then poll loadBuildDetails until buildDetailObject.finishTime exists. 
     async checkRunningBuildStatus(){
      
       try{
@@ -176,13 +180,17 @@ export default {
         
         this.buildName = this.buildObject.definition.name;
 
-        const averageBuildTime = this.averageBuildTimes[this.buildObject.definition.id];
-        this.$set(this.buildObject, 'averageBuildTime', averageBuildTime)
+        // this should be moved to loadBuildDetails!!
+        
 
       }
       catch(e){
        console.error(e)
       }
+    },
+    getAverageBuildTime(){
+        const averageBuildTime = this.averageBuildTimes[this.buildObject.definition.id];
+        this.$set(this.buildObject, 'averageBuildTime', averageBuildTime)
     },
 
     pollMenuItems() {
@@ -192,50 +200,51 @@ export default {
       });
     },
 
-    async loadBuildDetails () {
+    // async loadBuildDetails () {
 
-        if(!this.buildObject.id){
-          return;
-        }
-      try{
-        let result = (await this.axios.get(`${this.baseUrl}?buildId=${this.buildObject.id}`)).data;
+    //     if(!this.buildObject.id){
+    //       return;
+    //     }
+    //   try{
+    //     let result = (await this.axios.get(`${this.baseUrl}?buildId=${this.buildObject.id}`)).data;
 
-        this.buildObject.buildName = result.name;
-        this.buildObject.buildNumber = result.buildNumber;
-        this.buildObject.queTime = result.queTime;
-        this.buildObject.startTime = result.startTime;
+    //     this.buildDetailedObject.id = result.id;
+    //     this.buildDetailedObject.buildName = result.name;
+    //     this.buildDetailedObject.buildNumber = result.buildNumber;
+    //     this.buildDetailedObject.queTime = result.queTime;
+    //     this.buildDetailedObject.startTime = result.startTime;
 
-        if(!result.finishTime){
-          this.buildObject.finishTime = "Pending.."
-        }
-        else{
-          this.buildObject.finishTime = result.finishTime; 
-        }
-        if(!result.buildTime == null){
-          this.buildObject.buildDuration = "Pending.."
-        }
-        else{
-          this.buildObject.buildDuration = result.buildTime;
-        }
-        if(!result.status == null){
-          this.buildObject.status = "Pending.."
-        }
-        else{
-          this.buildObject.status = result.status;
-        }
-        if(!result.result == null){
-          this.buildObject.result = "Pending.."
-        }
-        else{
-          this.buildObject.result = result.result;
-        }
-        this.buildObject.developer = result.developer;    
-        }
-      catch(e){
-      console.log(e)
-      }
+    //     if(!result.finishTime){
+    //       this.buildDetailedObject.finishTime = "Pending.."
+    //     }
+    //     else{
+    //       this.buildDetailedObject.finishTime = result.finishTime; 
+    //     }
+    //     if(!result.buildTime == null){
+    //       this.buildDetailedObject.buildDuration = "Pending.."
+    //     }
+    //     else{
+    //       this.buildDetailedObject.buildDuration = result.buildTime;
+    //     }
+    //     if(!result.status == "inProgress"){
+    //       this.buildDetailedObject.status = "Pending.."
+    //     }
+    //     else{
+    //       this.buildDetailedObject.status = result.status;
+    //     }
+    //     if(!result.result == null){
+    //       this.buildDetailedObject.result = "Pending.."
+    //     }
+    //     else{
+    //       this.buildDetailedObject.result = result.result;
+    //     }
+    //     this.buildDetailedObject.developer = result.developer;    
+    //     }
+    //   catch(e){
+    //   console.log(e)
+    //   }
 
-    },
+    // },
   }
 }
 </script>

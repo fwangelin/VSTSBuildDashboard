@@ -11,9 +11,9 @@
             <tr>
                 <td>Build name:</td> <td>{{buildName}}</td>
             </tr>
-            <tr>
+            <!-- <tr>
                 <td>Build Qued at:</td> <td>{{queTime}}</td>
-            </tr>
+            </tr> -->
             <tr>    
                 <td>Build start time:</td> <td>{{startTime}}</td>
             </tr>
